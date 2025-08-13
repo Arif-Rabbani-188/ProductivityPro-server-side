@@ -23,8 +23,8 @@ let usersCollection;
 async function runMongo() {
   try {
     await client.connect();
-  const db = client.db('productivitypro');
-  usersCollection = db.collection('users');
+    const db = client.db('productivitypro');
+    usersCollection = db.collection('users');
     await client.db('admin').command({ ping: 1 });
     console.log('Pinged your deployment. You successfully connected to MongoDB!');
   } catch (err) {
@@ -33,8 +33,21 @@ async function runMongo() {
 }
 runMongo();
 
+// Helper to ensure MongoDB is connected before each request
+async function ensureMongoConnected() {
+  if (!client.topology || !client.topology.isConnected()) {
+    try {
+      await client.connect();
+      console.log('Reconnected to MongoDB');
+    } catch (err) {
+      console.error('MongoDB reconnection error:', err);
+    }
+  }
+}
+
 // Create or update user on login/register (email/password or Google)
 app.post('/api/users', async (req, res) => {
+  await ensureMongoConnected();
   const { uid, email, displayName, photoURL, provider } = req.body;
   if (!uid || !email) return res.status(400).json({ error: 'uid and email required' });
   try {
@@ -67,6 +80,7 @@ app.post('/api/users', async (req, res) => {
       };
 // Invite a collaborator by email (adds to both users' collaboration arrays)
 app.post('/api/collaboration/invite', async (req, res) => {
+  await ensureMongoConnected();
   const { inviterUid, inviteeEmail, inviteeName, inviteeAvatar } = req.body;
   if (!inviterUid || !inviteeEmail) return res.status(400).json({ error: 'inviterUid and inviteeEmail required' });
   try {
@@ -103,6 +117,7 @@ app.post('/api/collaboration/invite', async (req, res) => {
 
 // Remove a collaborator by email
 app.post('/api/collaboration/remove', async (req, res) => {
+  await ensureMongoConnected();
   const { userUid, collaboratorEmail } = req.body;
   if (!userUid || !collaboratorEmail) return res.status(400).json({ error: 'userUid and collaboratorEmail required' });
   try {
@@ -118,6 +133,7 @@ app.post('/api/collaboration/remove', async (req, res) => {
 
 // Update shared tasks with a collaborator
 app.post('/api/collaboration/update-tasks', async (req, res) => {
+  await ensureMongoConnected();
   const { userUid, collaboratorEmail, sharedTasks } = req.body;
   if (!userUid || !collaboratorEmail || !Array.isArray(sharedTasks)) return res.status(400).json({ error: 'userUid, collaboratorEmail, sharedTasks required' });
   try {
@@ -140,6 +156,7 @@ app.post('/api/collaboration/update-tasks', async (req, res) => {
 
 // Get user data
 app.get('/api/users/:uid', async (req, res) => {
+  await ensureMongoConnected();
   try {
     const user = await usersCollection.findOne({ uid: req.params.uid });
     if (!user) return res.status(404).json({ error: 'User not found' });
@@ -151,6 +168,7 @@ app.get('/api/users/:uid', async (req, res) => {
 
 // Update user data (tasks, habits, etc.)
 app.put('/api/users/:uid', async (req, res) => {
+  await ensureMongoConnected();
   try {
     const update = req.body;
     const result = await usersCollection.updateOne(
