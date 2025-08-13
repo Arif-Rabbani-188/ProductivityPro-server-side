@@ -67,17 +67,51 @@ app.post('/api/users', async (req, res) => {
         displayName,
         photoURL,
         provider,
-        lastLogin: new Date(),
-        tasks: [],
-        habits: [],
-        goals: [],
-        notes: [],
-        mindMap: [],
-        journal: [],
-        planner: [],
-        collaboration: [], // { email, name, avatar, sharedTasks: [] }
-        createdAt: new Date()
-      };
+  lastLogin: new Date(),
+  tasks: [],
+  habits: [],
+  goals: [],
+  notes: [],
+  mindMap: [],
+  journal: [],
+  planner: [],
+  collaboration: [], // { email, name, avatar, sharedTasks: [] }
+  namaz: [], // Namaz Tracker records
+  settings: { visibleSections: ["Dashboard","Tasks","Notes","Habits","Goals","Planner","Journal","Calendar","Collaboration","MindMap","Music","Resources","Review","Pomodoro","NamazTracker"] },
+  createdAt: new Date()
+};
+
+// Namaz Tracker: Save namaz records
+app.put('/api/users/:uid/namaz', async (req, res) => {
+  await ensureMongoConnected();
+  try {
+    const { namaz } = req.body;
+    if (!Array.isArray(namaz)) return res.status(400).json({ error: 'namaz must be array' });
+    const result = await usersCollection.updateOne(
+      { uid: req.params.uid },
+      { $set: { namaz } }
+    );
+    res.json({ success: true, result });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Settings: Save user settings
+app.put('/api/users/:uid/settings', async (req, res) => {
+  await ensureMongoConnected();
+  try {
+    const { settings } = req.body;
+    if (!settings || typeof settings !== 'object') return res.status(400).json({ error: 'settings must be object' });
+    const result = await usersCollection.updateOne(
+      { uid: req.params.uid },
+      { $set: { settings } }
+    );
+    res.json({ success: true, result });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 // Invite a collaborator by email (adds to both users' collaboration arrays)
 app.post('/api/collaboration/invite', async (req, res) => {
   await ensureMongoConnected();
