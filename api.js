@@ -77,7 +77,7 @@ app.post('/api/users', async (req, res) => {
   planner: [],
   collaboration: [], // { email, name, avatar, sharedTasks: [] }
   namaz: [], // Namaz Tracker records
-  settings: { visibleSections: ["Dashboard","Tasks","Notes","Habits","Goals","Planner","Journal","Calendar","Collaboration","MindMap","Music","Resources","Review","Pomodoro","NamazTracker"] },
+  settings: { visibleSections: ["Dashboard","Tasks","Notes","Habits","Goals","Planner","Journal","Calendar","Collaboration","MindMap","Pomodoro","NamazTracker"] },
   createdAt: new Date()
 };
 
