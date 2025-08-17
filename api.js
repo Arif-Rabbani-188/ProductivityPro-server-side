@@ -207,9 +207,19 @@ app.put('/api/users/:uid', async (req, res) => {
   await ensureMongoConnected();
   try {
     const update = req.body;
+    // If plannerByDate or plannerHistory is present, update those fields
+    const setObj = {};
+    if (update.plannerByDate) setObj.plannerByDate = update.plannerByDate;
+    if (update.plannerHistory) setObj.plannerHistory = update.plannerHistory;
+    // Also allow updating other fields as before
+    Object.keys(update).forEach(key => {
+      if (!['plannerByDate','plannerHistory'].includes(key)) {
+        setObj[key] = update[key];
+      }
+    });
     const result = await usersCollection.updateOne(
       { uid: req.params.uid },
-      { $set: update }
+      { $set: setObj }
     );
     res.json({ success: true, result });
   } catch (err) {
